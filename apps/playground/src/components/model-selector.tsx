@@ -279,7 +279,7 @@ export function ModelSelector({
 	}, [models]);
 
 	const filteredModels = React.useMemo(() => {
-		let filtered = models;
+		let filtered = models.filter((model) => model.id !== "custom");
 
 		// Text search
 		if (searchQuery) {
