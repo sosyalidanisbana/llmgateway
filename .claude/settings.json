@@ -8,21 +8,5 @@
 			"Read(.conductor/**)",
 			"Read(.turbo/**)"
 		]
-	},
-	"hooks": {
-		"Stop": [
-			{
-				"hooks": [
-					{
-						"type": "command",
-						"command": "pnpm format"
-					},
-					{
-						"type": "command",
-						"command": "pnpm build"
-					}
-				]
-			}
-		]
 	}
 }
