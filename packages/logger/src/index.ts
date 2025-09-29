@@ -106,21 +106,27 @@ class LLMGatewayLogger {
 
 		const projectId = process.env.GOOGLE_CLOUD_PROJECT;
 		const traceId = spanContext.traceId;
+		const isProduction = process.env.NODE_ENV === "production";
 
-		return {
-			// Google Cloud Logging trace correlation
-			"logging.googleapis.com/trace": projectId
-				? `projects/${projectId}/traces/${traceId}`
-				: traceId,
-			"logging.googleapis.com/spanId": spanContext.spanId,
-			"logging.googleapis.com/trace_sampled": Boolean(
-				spanContext.traceFlags & TraceFlags.SAMPLED,
-			),
-			// Additional context for manual correlation
-			traceId,
-			spanId: spanContext.spanId,
-			traceFlags: spanContext.traceFlags.toString(),
-		};
+		// Only include Google Cloud Logging fields in production
+		if (isProduction) {
+			return {
+				// Google Cloud Logging trace correlation
+				"logging.googleapis.com/trace": projectId
+					? `projects/${projectId}/traces/${traceId}`
+					: traceId,
+				"logging.googleapis.com/spanId": spanContext.spanId,
+				"logging.googleapis.com/trace_sampled": Boolean(
+					spanContext.traceFlags & TraceFlags.SAMPLED,
+				),
+				// Additional context for manual correlation
+				traceId,
+				spanId: spanContext.spanId,
+				traceFlags: spanContext.traceFlags.toString(),
+			};
+		}
+
+		return {};
 	}
 
 	// Core logging methods

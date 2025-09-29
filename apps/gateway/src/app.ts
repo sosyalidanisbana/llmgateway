@@ -52,13 +52,17 @@ export const config = {
 export const app = new OpenAPIHono<ServerTypes>();
 
 const honoRequestLogger = honoLogger((message: string, ...args: any) => {
-	logger.info("request", {
-		kind: "request",
-		service: "gateway",
-		source: "hono-logger",
+	logger.info(
 		message,
-		args,
-	});
+		process.env.NODE_ENV === "production"
+			? {
+					kind: "request",
+					service: "gateway",
+					source: "hono-logger",
+					args,
+				}
+			: undefined,
+	);
 });
 
 const requestLifecycleMiddleware = createRequestLifecycleMiddleware({
