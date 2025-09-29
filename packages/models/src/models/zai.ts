@@ -128,8 +128,8 @@ export const zaiModels = [
 			{
 				providerId: "zai",
 				modelName: "glm-4.5-flash",
-				inputPrice: 0,
-				outputPrice: 0,
+				inputPrice: 3.2 / 1e6,
+				outputPrice: 12.8 / 1e6,
 				requestPrice: 0,
 				contextSize: 128000,
 				maxOutput: undefined,

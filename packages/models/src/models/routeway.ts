@@ -210,7 +210,7 @@ export const routewayModels = [
 	},
 	{
 		id: "nemotron-nano-9b-v2",
-		name: "Nemotron Nano 9B V2",
+		name: "Nemotron Nano 9B V2 (Free)",
 		family: "nvidia",
 		free: true,
 		deprecatedAt: undefined,
