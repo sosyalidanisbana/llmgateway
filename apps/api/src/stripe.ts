@@ -513,6 +513,14 @@ async function handleSetupIntentSucceeded(
 	if (!organizationId || !payment_method) {
 		logger.error(
 			`Missing organizationId or payment_method in setupIntent: ${event.id} ${setupIntent.id}`,
+			{
+				hasOrganizationId: !!organizationId,
+				hasPaymentMethod: !!payment_method,
+				metadata: setupIntent.metadata,
+				paymentMethod: payment_method,
+				setupIntentStatus: setupIntent.status,
+				customer: setupIntent.customer,
+			},
 		);
 		return;
 	}
