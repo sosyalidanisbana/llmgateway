@@ -30,6 +30,32 @@ describe("Models", () => {
 		expect(o1MiniModel?.supportsSystemRole).toBe(false);
 		expect(o1MiniModel?.family).toBe("openai");
 	});
+
+	it("should have free: true when provider mapping has zero pricing", () => {
+		const modelsWithZeroPricing = models.filter((model) =>
+			model.providers.some(
+				(provider) => provider.inputPrice === 0 || provider.outputPrice === 0,
+			),
+		);
+
+		const modelsWithoutFreeFlag = modelsWithZeroPricing.filter(
+			(model) => (model as { free?: boolean }).free !== true,
+		);
+
+		if (modelsWithoutFreeFlag.length > 0) {
+			const errorDetails = modelsWithoutFreeFlag.map((model) => {
+				const zeroPricedProviders = model.providers.filter(
+					(p) => p.inputPrice === 0 || p.outputPrice === 0,
+				);
+				return `${model.id}: providers ${zeroPricedProviders.map((p) => `${p.providerId}/${p.modelName} (input: ${p.inputPrice}, output: ${p.outputPrice})`).join(", ")}`;
+			});
+			throw new Error(
+				`Models with zero pricing must have free: true:\n${errorDetails.join("\n")}`,
+			);
+		}
+
+		expect(modelsWithoutFreeFlag.length).toBe(0);
+	});
 });
 
 describe("System Role Handling", () => {
