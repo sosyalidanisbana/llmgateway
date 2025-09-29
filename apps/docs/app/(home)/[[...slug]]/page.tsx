@@ -62,7 +62,7 @@ export default async function Page(props: {
 			tableOfContent={{
 				style: "clerk",
 			}}
-			lastUpdate={new Date(page.data.lastModifiedTime)}
+			lastUpdate={new Date(page.data.lastModified || 0)}
 		>
 			<div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
 				<ViewOptions
