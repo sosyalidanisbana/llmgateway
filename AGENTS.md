@@ -69,6 +69,7 @@ NOTE: these commands can only be run in the root directory of the repository, no
 - **Gateway** (`apps/gateway`) - LLM request routing and provider management (Hono + Zod + OpenAPI)
 - **API** (`apps/api`) - Backend API for user management, billing, analytics (Hono + Zod + OpenAPI)
 - **UI** (`apps/ui`) - Frontend dashboard (Next.js App Router)
+- **Playground** (`apps/playground`) - Interactive LLM testing environment (Next.js App Router)
 - **Docs** (`apps/docs`) - Documentation site (Next.js + Fumadocs)
 
 ### Shared Packages
