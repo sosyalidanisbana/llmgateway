@@ -321,3 +321,6 @@ export {
 	createRequestLifecycleMiddleware,
 	type RequestLifecycleMiddlewareOptions,
 } from "./request-lifecycle.js";
+
+// Re-export hono logger
+export { createHonoRequestLogger } from "./logger.js";

@@ -5,11 +5,13 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import { logger as honoLogger } from "hono/logger";
 import { z } from "zod";
 
 import { db } from "@llmgateway/db";
-import { createRequestLifecycleMiddleware } from "@llmgateway/instrumentation";
+import {
+	createHonoRequestLogger,
+	createRequestLifecycleMiddleware,
+} from "@llmgateway/instrumentation";
 import { logger } from "@llmgateway/logger";
 import { HealthChecker } from "@llmgateway/shared";
 
@@ -37,19 +39,7 @@ export const config = {
 
 export const app = new OpenAPIHono<ServerTypes>();
 
-const honoRequestLogger = honoLogger((message: string, ...args: any) => {
-	logger.info(
-		message,
-		process.env.NODE_ENV === "production"
-			? {
-					kind: "request",
-					service: "api",
-					source: "hono-logger",
-					args,
-				}
-			: undefined,
-	);
-});
+const honoRequestLogger = createHonoRequestLogger({ service: "api" });
 
 const requestLifecycleMiddleware = createRequestLifecycleMiddleware({
 	serviceName: "llmgateway-api-lifecycle",
