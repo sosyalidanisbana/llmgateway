@@ -2266,9 +2266,9 @@ chat.openapi(completions, async (c) => {
 									usage.totalTokens !== null
 								) {
 									transformedData.usage = {
-										prompt_tokens: usage.promptTokens,
-										completion_tokens: usage.completionTokens,
-										total_tokens: usage.totalTokens,
+										prompt_tokens: usage.promptTokens ?? 0,
+										completion_tokens: usage.completionTokens ?? 0,
+										total_tokens: usage.totalTokens ?? 0,
 										...(usage.reasoningTokens !== null && {
 											reasoning_tokens: usage.reasoningTokens,
 										}),
