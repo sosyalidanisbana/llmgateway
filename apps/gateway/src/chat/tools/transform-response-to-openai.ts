@@ -38,7 +38,7 @@ export function transformResponseToOpenai(
 							role: "assistant",
 							content: content,
 							...(reasoningContent !== null && {
-								reasoning_content: reasoningContent,
+								reasoning: reasoningContent,
 							}),
 							...(toolResults && { tool_calls: toolResults }),
 							...(images && images.length > 0 && { images }),
@@ -88,7 +88,7 @@ export function transformResponseToOpenai(
 							role: "assistant",
 							content: content,
 							...(reasoningContent !== null && {
-								reasoning_content: reasoningContent,
+								reasoning: reasoningContent,
 							}),
 							...(toolResults && { tool_calls: toolResults }),
 						},
@@ -147,7 +147,7 @@ export function transformResponseToOpenai(
 								role: "assistant",
 								content: content,
 								...(reasoningContent !== null && {
-									reasoning_content: reasoningContent,
+									reasoning: reasoningContent,
 								}),
 							},
 							finish_reason: finishReason || "stop",
@@ -176,13 +176,13 @@ export function transformResponseToOpenai(
 					},
 				};
 			} else {
-				// Always transform reasoning field to reasoning_content even if response already has an id
+				// Ensure reasoning field is present if we have reasoning content
 				if (transformedResponse.choices?.[0]?.message) {
 					const message = transformedResponse.choices[0].message;
 					if (reasoningContent !== null) {
-						message.reasoning_content = reasoningContent;
-						// Remove the old reasoning field if it exists
-						delete message.reasoning;
+						message.reasoning = reasoningContent;
+						// Remove the old reasoning_content field if it exists
+						delete message.reasoning_content;
 					}
 				}
 				// Add metadata to existing response
@@ -213,7 +213,7 @@ export function transformResponseToOpenai(
 								role: "assistant",
 								content: content,
 								...(reasoningContent !== null && {
-									reasoning_content: reasoningContent,
+									reasoning: reasoningContent,
 								}),
 								...(toolResults && { tool_calls: toolResults }),
 							},

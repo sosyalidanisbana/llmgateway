@@ -250,7 +250,7 @@ const completions = createRoute({
 								message: z.object({
 									role: z.string(),
 									content: z.string().nullable(),
-									reasoning_content: z.string().nullable().optional(),
+									reasoning: z.string().nullable().optional(),
 									tool_calls: z
 										.array(
 											z.object({
@@ -1373,10 +1373,7 @@ chat.openapi(completions, async (c) => {
 						}
 
 						// Extract reasoning content from chunk
-						if (chunkData.choices?.[0]?.delta?.reasoning_content) {
-							fullReasoningContent +=
-								chunkData.choices[0].delta.reasoning_content;
-						} else if (chunkData.choices?.[0]?.delta?.reasoning) {
+						if (chunkData.choices?.[0]?.delta?.reasoning) {
 							fullReasoningContent += chunkData.choices[0].delta.reasoning;
 						}
 
@@ -1535,9 +1532,7 @@ chat.openapi(completions, async (c) => {
 					responseSize: JSON.stringify(cachedResponse).length,
 					content: cachedResponse.choices?.[0]?.message?.content || null,
 					reasoningContent:
-						cachedResponse.choices?.[0]?.message?.reasoning_content ||
-						cachedResponse.choices?.[0]?.message?.reasoning ||
-						null,
+						cachedResponse.choices?.[0]?.message?.reasoning || null,
 					finishReason: cachedResponse.choices?.[0]?.finish_reason || null,
 					promptTokens: cachedResponse.usage?.prompt_tokens || null,
 					completionTokens: cachedResponse.usage?.completion_tokens || null,

@@ -302,13 +302,9 @@ describe("e2e", getConcurrentTestOptions(), () => {
 					(reasoningProvider as ProviderModelMapping)?.reasoningOutput !==
 					"omit"
 				) {
-					expect(json.choices[0].message).toHaveProperty("reasoning_content");
-					expect(typeof json.choices[0].message.reasoning_content).toBe(
-						"string",
-					);
-					expect(
-						json.choices[0].message.reasoning_content.length,
-					).toBeGreaterThan(0);
+					expect(json.choices[0].message).toHaveProperty("reasoning");
+					expect(typeof json.choices[0].message.reasoning).toBe("string");
+					expect(json.choices[0].message.reasoning.length).toBeGreaterThan(0);
 				}
 
 				// Validate logs

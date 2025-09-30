@@ -39,7 +39,7 @@ export function transformStreamingToOpenai(
 				data.delta?.type === "thinking_delta" &&
 				data.delta?.thinking
 			) {
-				// Handle thinking content delta - convert to unified reasoning_content format
+				// Handle thinking content delta - convert to unified reasoning format
 				transformedData = {
 					id: data.id || `chatcmpl-${Date.now()}`,
 					object: "chat.completion.chunk",
@@ -49,7 +49,7 @@ export function transformStreamingToOpenai(
 						{
 							index: 0,
 							delta: {
-								reasoning_content: data.delta.thinking,
+								reasoning: data.delta.thinking,
 								role: "assistant",
 							},
 							finish_reason: null,
@@ -234,7 +234,7 @@ export function transformStreamingToOpenai(
 
 				// Add thinking/reasoning content if present
 				if (hasThought) {
-					delta.reasoning_content =
+					delta.reasoning =
 						parts
 							.filter((part: any) => part.thought)
 							.map((part: any) =>
@@ -443,7 +443,7 @@ export function transformStreamingToOpenai(
 									index: 0,
 									delta: {
 										role: "assistant",
-										reasoning_content: data.delta || data.part?.text || "",
+										reasoning: data.delta || data.part?.text || "",
 									},
 									finish_reason: null,
 								},

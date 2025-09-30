@@ -83,12 +83,12 @@ describe("e2e", getConcurrentTestOptions(), () => {
 			) as ProviderModelMapping;
 			const useResponsesApi = process.env.USE_RESPONSES_API === "true";
 			const isOpenAI = reasoningProvider?.providerId === "openai";
-			// only enforce reasoning_content checks for where reasoningOutput is not "omit" and for openai, only if the responses api is used
+			// only enforce reasoning checks for where reasoningOutput is not "omit" and for openai, only if the responses api is used
 			if (
 				reasoningProvider?.reasoningOutput !== "omit" &&
 				(!isOpenAI || useResponsesApi)
 			) {
-				expect(json.choices[0].message).toHaveProperty("reasoning_content");
+				expect(json.choices[0].message).toHaveProperty("reasoning");
 			}
 		},
 	);

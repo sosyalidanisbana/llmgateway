@@ -122,21 +122,21 @@ describe("e2e", getConcurrentTestOptions(), () => {
 				expect(usageChunk.usage.reasoning_tokens).toBeGreaterThanOrEqual(0);
 			}
 
-			// Verify reasoning content is present in unified reasoning_content field - only if the provider expects reasoning output
+			// Verify reasoning content is present in unified reasoning field - only if the provider expects reasoning output
 			const reasoningProvider = providers?.find(
 				(p: ProviderModelMapping) => p.reasoning === true,
 			) as ProviderModelMapping;
 			const useResponsesApi = process.env.USE_RESPONSES_API === "true";
 			const isOpenAI = reasoningProvider?.providerId === "openai";
-			// When using the Responses API, only enforce reasoning_content checks for OpenAI.
+			// When using the Responses API, only enforce reasoning checks for OpenAI.
 			if (
 				reasoningProvider?.reasoningOutput !== "omit" &&
 				(!isOpenAI || useResponsesApi)
 			) {
 				const reasoningChunks = streamResult.chunks.filter(
 					(chunk: any) =>
-						chunk.choices?.[0]?.delta?.reasoning_content &&
-						chunk.choices[0].delta.reasoning_content.length > 0,
+						chunk.choices?.[0]?.delta?.reasoning &&
+						chunk.choices[0].delta.reasoning.length > 0,
 				);
 				expect(reasoningChunks.length).toBeGreaterThan(0);
 			}

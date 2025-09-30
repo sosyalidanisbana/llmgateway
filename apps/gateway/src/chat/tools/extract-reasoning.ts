@@ -23,10 +23,6 @@ export function extractReasoning(data: any, provider: Provider): string {
 			return reasoningParts.map((part: any) => part.text).join("") || "";
 		}
 		default: // OpenAI format
-			return (
-				data.choices?.[0]?.delta?.reasoning_content ||
-				data.choices?.[0]?.delta?.reasoning ||
-				""
-			);
+			return data.choices?.[0]?.delta?.reasoning || "";
 	}
 }

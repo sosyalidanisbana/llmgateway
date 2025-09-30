@@ -15,10 +15,10 @@ export function transformOpenaiStreaming(data: any, usedModel: string): any {
 					role: "assistant",
 				};
 
-		// Normalize reasoning field to reasoning_content for consistency
-		if (delta.reasoning && !delta.reasoning_content) {
-			delta.reasoning_content = delta.reasoning;
-			delete delta.reasoning;
+		// Normalize reasoning_content field to reasoning for OpenAI compatibility
+		if (delta.reasoning_content && !delta.reasoning) {
+			delta.reasoning = delta.reasoning_content;
+			delete delta.reasoning_content;
 		}
 
 		return {
@@ -49,10 +49,10 @@ export function transformOpenaiStreaming(data: any, usedModel: string): any {
 							}
 						: choice.delta;
 
-					// Normalize reasoning field to reasoning_content for consistency
-					if (delta?.reasoning && !delta.reasoning_content) {
-						delta.reasoning_content = delta.reasoning;
-						delete delta.reasoning;
+					// Normalize reasoning_content field to reasoning for OpenAI compatibility
+					if (delta?.reasoning_content && !delta.reasoning) {
+						delta.reasoning = delta.reasoning_content;
+						delete delta.reasoning_content;
 					}
 
 					return {

@@ -248,11 +248,8 @@ export function parseProviderResponse(
 				// Standard OpenAI chat completions format
 				toolResults = json.choices?.[0]?.message?.tool_calls || null;
 				content = json.choices?.[0]?.message?.content || null;
-				// Extract reasoning content for reasoning-capable models (check both field names)
-				reasoningContent =
-					json.choices?.[0]?.message?.reasoning_content ||
-					json.choices?.[0]?.message?.reasoning ||
-					null;
+				// Extract reasoning content for reasoning-capable models
+				reasoningContent = json.choices?.[0]?.message?.reasoning || null;
 				finishReason = json.choices?.[0]?.finish_reason || null;
 
 				// ZAI-specific fix for incorrect finish_reason in tool response scenarios
