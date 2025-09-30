@@ -43,18 +43,7 @@ export function getUnifiedFinishReason(
 				return UnifiedFinishReason.TOOL_CALLS;
 			}
 			break;
-		case "google-ai-studio":
-			if (finishReason === "STOP") {
-				return UnifiedFinishReason.COMPLETED;
-			}
-			if (finishReason === "MAX_TOKENS") {
-				return UnifiedFinishReason.LENGTH_LIMIT;
-			}
-			if (finishReason === "SAFETY") {
-				return UnifiedFinishReason.CONTENT_FILTER;
-			}
-			break;
-		default: // OpenAI format (also used by inference.net)
+		default: // OpenAI format (also used by inference.net and google-ai-studio after transformation)
 			if (finishReason === "stop") {
 				return UnifiedFinishReason.COMPLETED;
 			}

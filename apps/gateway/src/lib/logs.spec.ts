@@ -29,15 +29,18 @@ describe("getUnifiedFinishReason", () => {
 		);
 	});
 
-	it("maps Google AI Studio finish reasons correctly", () => {
-		expect(getUnifiedFinishReason("STOP", "google-ai-studio")).toBe(
+	it("maps Google AI Studio finish reasons correctly (already transformed to OpenAI format)", () => {
+		expect(getUnifiedFinishReason("stop", "google-ai-studio")).toBe(
 			UnifiedFinishReason.COMPLETED,
 		);
-		expect(getUnifiedFinishReason("MAX_TOKENS", "google-ai-studio")).toBe(
+		expect(getUnifiedFinishReason("length", "google-ai-studio")).toBe(
 			UnifiedFinishReason.LENGTH_LIMIT,
 		);
-		expect(getUnifiedFinishReason("SAFETY", "google-ai-studio")).toBe(
+		expect(getUnifiedFinishReason("content_filter", "google-ai-studio")).toBe(
 			UnifiedFinishReason.CONTENT_FILTER,
+		);
+		expect(getUnifiedFinishReason("tool_calls", "google-ai-studio")).toBe(
+			UnifiedFinishReason.TOOL_CALLS,
 		);
 	});
 
