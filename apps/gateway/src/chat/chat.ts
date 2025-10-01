@@ -284,7 +284,7 @@ const completions = createRoute({
 							reasoning_tokens: z.number().optional(),
 							prompt_tokens_details: z
 								.object({
-									cached_tokens: z.number().optional(),
+									cached_tokens: z.number(),
 								})
 								.optional(),
 						}),
@@ -2274,6 +2274,15 @@ chat.openapi(completions, async (c) => {
 										}),
 									};
 								}
+							}
+
+							// Normalize usage.prompt_tokens_details to always include cached_tokens
+							if (transformedData.usage?.prompt_tokens_details) {
+								transformedData.usage.prompt_tokens_details = {
+									cached_tokens:
+										transformedData.usage.prompt_tokens_details.cached_tokens ??
+										0,
+								};
 							}
 
 							await writeSSEAndCache({
