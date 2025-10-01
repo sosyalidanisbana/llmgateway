@@ -6,8 +6,8 @@ import { deleteAll } from "@/testing.js";
 
 import { db, tables } from "@llmgateway/db";
 import {
-	getConcurrentTestOptions,
 	getProviderEnvVar,
+	getTestOptions,
 	providers,
 } from "@llmgateway/models";
 
@@ -18,7 +18,7 @@ function generateTestId(): string {
 
 describe(
 	"e2e tests for provider keys",
-	getConcurrentTestOptions({ completions: false }),
+	getTestOptions({ completions: false }),
 	() => {
 		beforeAll(async () => {
 			// Clean the database once before all tests
@@ -29,6 +29,7 @@ describe(
 			// Clean up after all tests are done
 			await deleteAll();
 		});
+
 		async function setupTestData() {
 			const testId = generateTestId();
 			const userId = `user-${testId}`;
