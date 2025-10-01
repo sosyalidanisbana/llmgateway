@@ -60,6 +60,26 @@ describe("e2e", getConcurrentTestOptions(), () => {
 			const log = await validateLogByRequestId(requestId);
 			expect(log.streamed).toBe(false);
 
+			// Determine if we should check for reasoning output
+			const reasoningProvider = providers?.find(
+				(p: ProviderModelMapping) => p.reasoning === true,
+			) as ProviderModelMapping;
+			const useResponsesApi = process.env.USE_RESPONSES_API === "true";
+			const isOpenAI = reasoningProvider?.providerId === "openai";
+			const shouldCheckReasoning =
+				reasoningProvider?.reasoningOutput !== "omit" &&
+				(!isOpenAI || useResponsesApi);
+
+			// Verify reasoning content is saved to database for reasoning models
+			if (shouldCheckReasoning) {
+				expect(log.reasoningContent).toBeTruthy();
+				expect(log.reasoningContent).not.toBeNull();
+				expect(typeof log.reasoningContent).toBe("string");
+				if (log.reasoningContent) {
+					expect(log.reasoningContent.length).toBeGreaterThan(0);
+				}
+			}
+
 			expect(json).toHaveProperty("usage");
 			expect(json.usage).toHaveProperty("prompt_tokens");
 			expect(json.usage).toHaveProperty("completion_tokens");
@@ -77,17 +97,8 @@ describe("e2e", getConcurrentTestOptions(), () => {
 				expect(json.usage.reasoning_tokens).toBeGreaterThanOrEqual(0);
 			}
 
-			// check for reasoning response - only if the provider expects reasoning output
-			const reasoningProvider = providers?.find(
-				(p: ProviderModelMapping) => p.reasoning === true,
-			) as ProviderModelMapping;
-			const useResponsesApi = process.env.USE_RESPONSES_API === "true";
-			const isOpenAI = reasoningProvider?.providerId === "openai";
-			// only enforce reasoning checks for where reasoningOutput is not "omit" and for openai, only if the responses api is used
-			if (
-				reasoningProvider?.reasoningOutput !== "omit" &&
-				(!isOpenAI || useResponsesApi)
-			) {
+			// Check for reasoning response in the message
+			if (shouldCheckReasoning) {
 				expect(json.choices[0].message).toHaveProperty("reasoning");
 			}
 		},

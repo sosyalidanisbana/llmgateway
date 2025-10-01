@@ -122,17 +122,18 @@ describe("e2e", getConcurrentTestOptions(), () => {
 				expect(usageChunk.usage.reasoning_tokens).toBeGreaterThanOrEqual(0);
 			}
 
-			// Verify reasoning content is present in unified reasoning field - only if the provider expects reasoning output
+			// Determine if we should check for reasoning output
 			const reasoningProvider = providers?.find(
 				(p: ProviderModelMapping) => p.reasoning === true,
 			) as ProviderModelMapping;
 			const useResponsesApi = process.env.USE_RESPONSES_API === "true";
 			const isOpenAI = reasoningProvider?.providerId === "openai";
-			// When using the Responses API, only enforce reasoning checks for OpenAI.
-			if (
+			const shouldCheckReasoning =
 				reasoningProvider?.reasoningOutput !== "omit" &&
-				(!isOpenAI || useResponsesApi)
-			) {
+				(!isOpenAI || useResponsesApi);
+
+			// Verify reasoning content is present in unified reasoning field in streaming chunks
+			if (shouldCheckReasoning) {
 				const reasoningChunks = streamResult.chunks.filter(
 					(chunk: any) =>
 						chunk.choices?.[0]?.delta?.reasoning &&
@@ -143,6 +144,16 @@ describe("e2e", getConcurrentTestOptions(), () => {
 
 			const log = await validateLogByRequestId(requestId);
 			expect(log.streamed).toBe(true);
+
+			// Verify reasoning content is saved to database for reasoning models
+			if (shouldCheckReasoning) {
+				expect(log.reasoningContent).toBeTruthy();
+				expect(log.reasoningContent).not.toBeNull();
+				expect(typeof log.reasoningContent).toBe("string");
+				if (log.reasoningContent) {
+					expect(log.reasoningContent.length).toBeGreaterThan(0);
+				}
+			}
 		},
 	);
 });
