@@ -2277,12 +2277,21 @@ chat.openapi(completions, async (c) => {
 							}
 
 							// Normalize usage.prompt_tokens_details to always include cached_tokens
-							if (transformedData.usage?.prompt_tokens_details) {
-								transformedData.usage.prompt_tokens_details = {
-									cached_tokens:
-										transformedData.usage.prompt_tokens_details.cached_tokens ??
-										0,
-								};
+							if (transformedData.usage) {
+								if (transformedData.usage.prompt_tokens_details) {
+									// Preserve all existing keys and only default cached_tokens
+									transformedData.usage.prompt_tokens_details = {
+										...transformedData.usage.prompt_tokens_details,
+										cached_tokens:
+											transformedData.usage.prompt_tokens_details
+												.cached_tokens ?? 0,
+									};
+								} else {
+									// Create prompt_tokens_details with cached_tokens set to 0
+									transformedData.usage.prompt_tokens_details = {
+										cached_tokens: 0,
+									};
+								}
 							}
 
 							await writeSSEAndCache({
