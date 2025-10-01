@@ -22,7 +22,11 @@ export function extractReasoning(data: any, provider: Provider): string {
 			const reasoningParts = parts.filter((part: any) => part.thought);
 			return reasoningParts.map((part: any) => part.text).join("") || "";
 		}
-		default: // OpenAI format
-			return data.choices?.[0]?.delta?.reasoning || "";
+		default: // OpenAI format (includes GLM/ZAI which use reasoning_content)
+			return (
+				data.choices?.[0]?.delta?.reasoning ||
+				data.choices?.[0]?.delta?.reasoning_content ||
+				""
+			);
 	}
 }
