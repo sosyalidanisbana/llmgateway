@@ -2,9 +2,45 @@
  * Helper function to transform standard OpenAI streaming format
  */
 export function transformOpenaiStreaming(data: any, usedModel: string): any {
+	// Check if response has choices array (even without object field) - handle GLM/ZAI format
+	// GLM returns: { id, choices: [{ delta: { reasoning_content } }] } without object field
+	if (data.id && data.choices && Array.isArray(data.choices)) {
+		// Has proper choices structure, transform it
+		return {
+			...data,
+			object: "chat.completion.chunk", // Force correct object type for streaming
+			choices:
+				data.choices?.map((choice: any) => {
+					if (!choice.delta) {
+						return choice;
+					}
+
+					// Create new delta with role
+					let delta: any = {
+						...choice.delta,
+						role: choice.delta.role || "assistant",
+					};
+
+					// Normalize reasoning_content field to reasoning for OpenAI compatibility
+					if (delta.reasoning_content) {
+						const { reasoning_content, ...rest } = delta;
+						delta = {
+							...rest,
+							reasoning: reasoning_content,
+						};
+					}
+
+					return {
+						...choice,
+						delta,
+					};
+				}) || data.choices,
+		};
+	}
+
 	// Ensure the response has the required OpenAI format fields
 	if (!data.id || !data.object) {
-		const delta = data.delta
+		let delta: any = data.delta
 			? {
 					...data.delta,
 					role: data.delta.role || "assistant",
@@ -16,9 +52,12 @@ export function transformOpenaiStreaming(data: any, usedModel: string): any {
 				};
 
 		// Normalize reasoning_content field to reasoning for OpenAI compatibility
-		if (delta.reasoning_content && !delta.reasoning) {
-			delta.reasoning = delta.reasoning_content;
-			delete delta.reasoning_content;
+		if (delta.reasoning_content) {
+			const { reasoning_content, ...rest } = delta;
+			delta = {
+				...rest,
+				reasoning: reasoning_content,
+			};
 		}
 
 		return {
@@ -35,31 +74,8 @@ export function transformOpenaiStreaming(data: any, usedModel: string): any {
 			],
 			usage: data.usage || null,
 		};
-	} else {
-		// Even if the response has the correct format, ensure role is set in delta and object is correct for streaming
-		return {
-			...data,
-			object: "chat.completion.chunk", // Force correct object type for streaming
-			choices:
-				data.choices?.map((choice: any) => {
-					const delta = choice.delta
-						? {
-								...choice.delta,
-								role: choice.delta.role || "assistant",
-							}
-						: choice.delta;
-
-					// Normalize reasoning_content field to reasoning for OpenAI compatibility
-					if (delta?.reasoning_content && !delta.reasoning) {
-						delta.reasoning = delta.reasoning_content;
-						delete delta.reasoning_content;
-					}
-
-					return {
-						...choice,
-						delta,
-					};
-				}) || data.choices,
-		};
 	}
+
+	// Fallback: response has both id and object but might be in unexpected format
+	return data;
 }

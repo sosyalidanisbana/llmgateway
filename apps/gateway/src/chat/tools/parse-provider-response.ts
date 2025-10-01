@@ -249,7 +249,11 @@ export function parseProviderResponse(
 				toolResults = json.choices?.[0]?.message?.tool_calls || null;
 				content = json.choices?.[0]?.message?.content || null;
 				// Extract reasoning content for reasoning-capable models
-				reasoningContent = json.choices?.[0]?.message?.reasoning || null;
+				// Check both reasoning and reasoning_content (GLM models use reasoning_content)
+				reasoningContent =
+					json.choices?.[0]?.message?.reasoning ||
+					json.choices?.[0]?.message?.reasoning_content ||
+					null;
 				finishReason = json.choices?.[0]?.finish_reason || null;
 
 				// ZAI-specific fix for incorrect finish_reason in tool response scenarios
