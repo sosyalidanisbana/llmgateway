@@ -123,7 +123,7 @@ export const deepseekModels = [
 		name: "DeepSeek R1 Distill Llama 70B",
 		family: "deepseek",
 		deprecatedAt: undefined,
-		deactivatedAt: new Date("2024-10-09"),
+		deactivatedAt: new Date("2025-10-09"),
 		stability: "beta" as const,
 		providers: [
 			{
