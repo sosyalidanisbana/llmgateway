@@ -180,7 +180,11 @@ export const testModels = filteredModels
 			}
 
 			// Skip unstable providers if not in full mode, unless they have test: "only" or are in TEST_MODELS
-			if (provider.stability === "unstable" && !fullMode) {
+			if (
+				(provider.stability === "unstable" ||
+					provider.stability === "experimental") &&
+				!fullMode
+			) {
 				// Allow if provider has test: "only"
 				if (provider.test !== "only") {
 					// Allow if model is specified in TEST_MODELS
@@ -229,7 +233,11 @@ export const providerModels = filteredModels
 			}
 
 			// Skip unstable providers if not in full mode, unless they have test: "only" or are in TEST_MODELS
-			if (provider.stability === "unstable" && !fullMode) {
+			if (
+				(provider.stability === "unstable" ||
+					provider.stability === "experimental") &&
+				!fullMode
+			) {
 				// Allow if provider has test: "only"
 				if (provider.test !== "only") {
 					// Allow if model is specified in TEST_MODELS
