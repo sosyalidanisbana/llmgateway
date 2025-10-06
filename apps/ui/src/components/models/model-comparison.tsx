@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
-import { ModelSelector } from "@/components/playground/model-selector";
+import { ModelSelector as PlaygroundModelSelector } from "@/components/models/playground-model-selector";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
 import {
@@ -42,6 +42,20 @@ const providerMap = new Map(
 );
 
 const modelMap = new Map(models.map((model) => [model.id, model]));
+
+function parseProviderModel(value: string | null): {
+	providerId?: string;
+	modelId?: ModelId;
+} {
+	if (!value) {
+		return {};
+	}
+	if (value.includes("_")) {
+		const [providerId, model] = value.split("_");
+		return { providerId, modelId: toModelId(model) };
+	}
+	return { modelId: toModelId(value) };
+}
 
 function toModelId(value: string | null): ModelId | undefined {
 	if (!value) {
@@ -408,13 +422,35 @@ function ParametersList({ parameters }: { parameters: string[] }) {
 	);
 }
 
+function getProviderPricingSummary(
+	provider: ProviderWithInfo | undefined,
+	field: PriceField,
+): PricingSummary | undefined {
+	if (!provider) {
+		return undefined;
+	}
+	const value = provider[field] as number | undefined;
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+	return {
+		value: formatPriceValue(value, field),
+		providerLabel: provider.providerInfo?.name ?? provider.providerId,
+	};
+}
+
 function renderRowValue(
 	key: ComparisonRowKey,
 	detail: ModelDetail | undefined,
+	selectedProviderId?: string,
 ): ReactNode {
 	if (!detail) {
 		return PLACEHOLDER;
 	}
+
+	const selectedProvider = selectedProviderId
+		? detail.providers.find((p) => p.providerId === selectedProviderId)
+		: undefined;
 
 	switch (key) {
 		case "modelId":
@@ -429,24 +465,44 @@ function renderRowValue(
 			return <StabilityBadge stability={detail.stability} />;
 		case "providers":
 			return <ProvidersList providers={detail.providers} />;
-		case "maxContext":
-			return detail.aggregated.maxContext
-				? formatContextSize(detail.aggregated.maxContext)
-				: PLACEHOLDER;
-		case "maxOutput":
-			return detail.aggregated.maxOutput
-				? detail.aggregated.maxOutput.toLocaleString()
-				: PLACEHOLDER;
-		case "inputPrice":
-			return <PricingCell summary={detail.aggregated.inputPrice} />;
-		case "outputPrice":
-			return <PricingCell summary={detail.aggregated.outputPrice} />;
-		case "cachedInputPrice":
-			return <PricingCell summary={detail.aggregated.cachedInputPrice} />;
-		case "imageInputPrice":
-			return <PricingCell summary={detail.aggregated.imageInputPrice} />;
-		case "requestPrice":
-			return <PricingCell summary={detail.aggregated.requestPrice} />;
+		case "maxContext": {
+			const ctx = selectedProvider?.contextSize ?? detail.aggregated.maxContext;
+			return ctx ? formatContextSize(ctx) : PLACEHOLDER;
+		}
+		case "maxOutput": {
+			const out = selectedProvider?.maxOutput ?? detail.aggregated.maxOutput;
+			return out ? out.toLocaleString() : PLACEHOLDER;
+		}
+		case "inputPrice": {
+			const summary =
+				getProviderPricingSummary(selectedProvider, "inputPrice") ||
+				detail.aggregated.inputPrice;
+			return <PricingCell summary={summary} />;
+		}
+		case "outputPrice": {
+			const summary =
+				getProviderPricingSummary(selectedProvider, "outputPrice") ||
+				detail.aggregated.outputPrice;
+			return <PricingCell summary={summary} />;
+		}
+		case "cachedInputPrice": {
+			const summary =
+				getProviderPricingSummary(selectedProvider, "cachedInputPrice") ||
+				detail.aggregated.cachedInputPrice;
+			return <PricingCell summary={summary} />;
+		}
+		case "imageInputPrice": {
+			const summary =
+				getProviderPricingSummary(selectedProvider, "imageInputPrice") ||
+				detail.aggregated.imageInputPrice;
+			return <PricingCell summary={summary} />;
+		}
+		case "requestPrice": {
+			const summary =
+				getProviderPricingSummary(selectedProvider, "requestPrice") ||
+				detail.aggregated.requestPrice;
+			return <PricingCell summary={summary} />;
+		}
 		case "streaming":
 			return <BooleanBadge value={detail.aggregated.streaming} />;
 		case "vision":
@@ -481,63 +537,46 @@ export function ModelComparison() {
 		? DEFAULT_RIGHT_MODEL
 		: (models[1]?.id as ModelId | undefined);
 
-	const queryLeft = toModelId(searchParams.get("left"));
-	const queryRight = toModelId(searchParams.get("right"));
+	const { providerId: queryLeftProviderId, modelId: queryLeft } =
+		parseProviderModel(searchParams.get("left"));
+	const { providerId: queryRightProviderId, modelId: queryRight } =
+		parseProviderModel(searchParams.get("right"));
 
-	const [leftModelId, setLeftModelId] = useState<ModelId | undefined>(
-		queryLeft ?? fallbackLeftModel,
-	);
-	const [rightModelId, setRightModelId] = useState<ModelId | undefined>(
-		queryRight ?? fallbackRightModel,
-	);
+	const leftModelId: ModelId | undefined = queryLeft ?? fallbackLeftModel;
+	const rightModelId: ModelId | undefined = queryRight ?? fallbackRightModel;
 
-	useEffect(() => {
-		const nextLeft = queryLeft ?? fallbackLeftModel;
-		if (nextLeft !== leftModelId) {
-			setLeftModelId(nextLeft);
-		}
-	}, [queryLeft, fallbackLeftModel, leftModelId]);
-
-	useEffect(() => {
-		const nextRight = queryRight ?? fallbackRightModel;
-		if (nextRight !== rightModelId) {
-			setRightModelId(nextRight);
-		}
-	}, [queryRight, fallbackRightModel, rightModelId]);
-
-	useEffect(() => {
+	const updateParams = (
+		nextLeft?: ModelId,
+		nextRight?: ModelId,
+		leftProviderId?: string,
+		rightProviderId?: string,
+	) => {
 		const params = new URLSearchParams(searchParamsString);
-		const currentLeft = params.get("left");
-		const currentRight = params.get("right");
-		let changed = false;
-
-		if (leftModelId) {
-			if (currentLeft !== leftModelId) {
-				params.set("left", leftModelId);
-				changed = true;
-			}
-		} else if (currentLeft) {
+		if (nextLeft) {
+			const providerId =
+				leftProviderId ??
+				modelMap.get(nextLeft)?.providers[0]?.providerId ??
+				"";
+			params.set("left", `${providerId}_${nextLeft}`);
+		} else {
 			params.delete("left");
-			changed = true;
 		}
-
-		if (rightModelId) {
-			if (currentRight !== rightModelId) {
-				params.set("right", rightModelId);
-				changed = true;
-			}
-		} else if (currentRight) {
+		if (nextRight) {
+			const providerId =
+				rightProviderId ??
+				modelMap.get(nextRight)?.providers[0]?.providerId ??
+				"";
+			params.set("right", `${providerId}_${nextRight}`);
+		} else {
 			params.delete("right");
-			changed = true;
 		}
-
-		if (!changed) {
-			return;
-		}
-
 		const next = params.toString();
-		router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-	}, [leftModelId, rightModelId, router, pathname, searchParamsString]);
+		if (next !== searchParamsString) {
+			router.replace(next ? `${pathname}?${next}` : pathname, {
+				scroll: false,
+			});
+		}
+	};
 
 	const leftModel = useMemo(
 		() => collectModelDetail(leftModelId),
@@ -565,47 +604,77 @@ export function ModelComparison() {
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => {
-								setLeftModelId(rightModelId);
-								setRightModelId(leftModelId);
-							}}
+							onClick={() => updateParams(rightModelId, leftModelId)}
 							className="w-full md:w-auto"
 						>
 							Swap Models
 						</Button>
 					</div>
 					<div className="grid gap-4 md:grid-cols-2">
-						<div className="space-y-2">
+						<div className="space-y-2 md:pl-48">
 							<div className="text-sm font-medium text-muted-foreground">
 								Model A
 							</div>
-							<ModelSelector
-								selectedModel={leftModelId ?? ""}
-								onModelSelect={(value) =>
-									setLeftModelId(toModelId(value) ?? fallbackLeftModel)
+							<PlaygroundModelSelector
+								models={models}
+								providers={providerDefinitions}
+								value={
+									leftModelId
+										? `${
+												queryLeftProviderId ??
+												providerDefinitions.find(
+													(p) =>
+														p.id ===
+														modelMap.get(leftModelId)?.providers[0]?.providerId,
+												)?.id ??
+												""
+											}/${leftModelId}`
+										: ""
 								}
+								onValueChange={(value) => {
+									const [prov, mod] = value.split("/");
+									const next = toModelId(mod ?? value) ?? fallbackLeftModel;
+									updateParams(next, rightModelId, prov, undefined);
+								}}
 							/>
 						</div>
-						<div className="space-y-2">
+						<div className="space-y-2 md:pl-24">
 							<div className="text-sm font-medium text-muted-foreground">
 								Model B
 							</div>
-							<ModelSelector
-								selectedModel={rightModelId ?? ""}
-								onModelSelect={(value) =>
-									setRightModelId(toModelId(value) ?? fallbackRightModel)
+							<PlaygroundModelSelector
+								models={models}
+								providers={providerDefinitions}
+								value={
+									rightModelId
+										? `${
+												queryRightProviderId ??
+												providerDefinitions.find(
+													(p) =>
+														p.id ===
+														modelMap.get(rightModelId)?.providers[0]
+															?.providerId,
+												)?.id ??
+												""
+											}/${rightModelId}`
+										: ""
 								}
+								onValueChange={(value) => {
+									const [prov, mod] = value.split("/");
+									const next = toModelId(mod ?? value) ?? fallbackRightModel;
+									updateParams(leftModelId, next, undefined, prov);
+								}}
 							/>
 						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
 					<div className="overflow-x-auto">
-						<Table>
+						<Table className="table-fixed min-w-[900px] md:min-w-0">
 							<TableHeader>
 								<TableRow>
-									<TableHead className="w-40">Feature</TableHead>
-									<TableHead className="min-w-[220px]">
+									<TableHead className="w-36 md:w-48">Feature</TableHead>
+									<TableHead className="w-1/2">
 										<div className="flex items-center gap-2">
 											<div className="flex flex-col">
 												<span className="font-semibold">
@@ -623,7 +692,7 @@ export function ModelComparison() {
 											<StabilityBadge stability={leftModel?.stability} />
 										</div>
 									</TableHead>
-									<TableHead className="min-w-[220px]">
+									<TableHead className="w-1/2">
 										<div className="flex items-center gap-2">
 											<div className="flex flex-col">
 												<span className="font-semibold">
@@ -646,9 +715,19 @@ export function ModelComparison() {
 							<TableBody>
 								{comparisonRows.map((row) => (
 									<TableRow key={row.key}>
-										<TableCell className="font-medium">{row.label}</TableCell>
-										<TableCell>{renderRowValue(row.key, leftModel)}</TableCell>
-										<TableCell>{renderRowValue(row.key, rightModel)}</TableCell>
+										<TableCell className="font-medium text-xs md:text-base">
+											{row.label}
+										</TableCell>
+										<TableCell className="align-top whitespace-normal break-words pr-4">
+											{renderRowValue(row.key, leftModel, queryLeftProviderId)}
+										</TableCell>
+										<TableCell className="align-top whitespace-normal break-words">
+											{renderRowValue(
+												row.key,
+												rightModel,
+												queryRightProviderId,
+											)}
+										</TableCell>
 									</TableRow>
 								))}
 							</TableBody>

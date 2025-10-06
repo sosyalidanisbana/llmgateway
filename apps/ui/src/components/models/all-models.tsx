@@ -27,7 +27,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 
 import Footer from "@/components/landing/footer";
-import { getProviderIcon } from "@/components/ui/providers-icons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/lib/components/badge";
 import { Button } from "@/lib/components/button";
@@ -40,6 +39,7 @@ import {
 } from "@/lib/components/card";
 import { Checkbox } from "@/lib/components/checkbox";
 import { Input } from "@/lib/components/input";
+import { getProviderIcon } from "@/lib/components/providers-icons";
 import {
 	Select,
 	SelectContent,

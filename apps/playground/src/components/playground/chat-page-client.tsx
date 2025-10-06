@@ -229,7 +229,10 @@ export default function ChatPageClient({
 	const [text, setText] = useState("");
 
 	const supportsImages = useMemo(() => {
-		const model = availableModels.find((m) => m.id === selectedModel);
+		let model = availableModels.find((m) => m.id === selectedModel);
+		if (!model && !selectedModel.includes("/")) {
+			model = availableModels.find((m) => m.id.endsWith(`/${selectedModel}`));
+		}
 		return !!model?.vision;
 	}, [availableModels, selectedModel]);
 
