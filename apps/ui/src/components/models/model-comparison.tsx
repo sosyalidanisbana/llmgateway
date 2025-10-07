@@ -212,17 +212,18 @@ function pickMostUnstableStability(
 }
 
 function formatPriceValue(value: number, field: PriceField) {
-	const decimals = value < 1 ? (value < 0.01 ? 4 : 3) : 2;
+	// Value is already in units based on field multiplier.
+	// For tokens pricing, show 2 decimals, for very small numbers bump precision.
+	const decimals = value < 1 ? (value < 0.1 ? 4 : 2) : 2;
 	const formatted = `$${value.toFixed(decimals)}`;
 
-	switch (field) {
-		case "requestPrice":
-			return `${formatted}/1K requests`;
-		case "imageInputPrice":
-			return `${formatted}/image`;
-		default:
-			return `${formatted}/1M tokens`;
+	if (field === "requestPrice") {
+		return `${formatted}/1K requests`;
 	}
+	if (field === "imageInputPrice") {
+		return `${formatted}/image`;
+	}
+	return `${formatted}/1M tokens`;
 }
 
 function getPricingSummary(
@@ -456,13 +457,26 @@ function getProviderPricingSummary(
 	if (!provider) {
 		return undefined;
 	}
-	const value = provider[field] as number | undefined;
-	if (value === undefined || value === null) {
+	const raw = provider[field] as number | undefined;
+	if (raw === undefined || raw === null) {
 		return undefined;
 	}
+	const multiplier =
+		field === "requestPrice"
+			? 1000
+			: field === "imageInputPrice"
+				? 1
+				: 1_000_000;
+	const discounted =
+		raw * multiplier * (provider.discount ? 1 - provider.discount : 1);
+	const original = raw * multiplier;
 	return {
-		value: formatPriceValue(value, field),
+		value: formatPriceValue(discounted, field),
 		providerLabel: provider.providerInfo?.name ?? provider.providerId,
+		originalValue:
+			provider.discount && original !== discounted
+				? formatPriceValue(original, field)
+				: undefined,
 	};
 }
 
