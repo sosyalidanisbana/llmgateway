@@ -21,6 +21,7 @@ import {
 	AlertTriangle,
 	ExternalLink,
 	Percent,
+	Scale,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1392,6 +1393,12 @@ export function AllModels({ children }: { children: React.ReactNode }) {
 									>
 										<Grid className="h-4 w-4 mr-1" />
 										Grid
+									</Button>
+									<Button size="sm" asChild>
+										<Link href="/models/compare">
+											<Scale className="h-4 w-4 mr-1" />
+											Compare
+										</Link>
 									</Button>
 								</div>
 							</div>
