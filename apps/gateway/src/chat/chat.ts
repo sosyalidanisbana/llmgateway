@@ -1795,6 +1795,10 @@ chat.openapi(completions, async (c) => {
 				logger.error("Provider error", {
 					status: res.status,
 					errorText: errorResponseText,
+					usedProvider,
+					requestedProvider,
+					usedModel,
+					initialRequestedModel,
 				});
 
 				// Determine the finish reason for error handling
@@ -2913,6 +2917,10 @@ chat.openapi(completions, async (c) => {
 		logger.error("Provider error", {
 			status: res.status,
 			errorText: errorResponseText,
+			usedProvider,
+			requestedProvider,
+			usedModel,
+			initialRequestedModel,
 		});
 
 		// Determine the finish reason first
