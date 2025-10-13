@@ -18,6 +18,7 @@ import {
 	useDataChat,
 } from "@/hooks/useChats";
 import { useUser } from "@/hooks/useUser";
+import { parseImageFile } from "@/lib/image-utils";
 import { mapModels } from "@/lib/mapmodels";
 
 import type { ComboboxModel, Organization, Project } from "@/lib/types";
@@ -71,14 +72,39 @@ export default function ChatPageClient({
 				if (!chatId) {
 					return;
 				}
+				// Extract assistant text and images from UIMessage parts
+				const textContent = message.parts
+					.filter((p) => p.type === "text")
+					.map((p) => p.text)
+					.join("");
+				const imageUrlParts = (message.parts as any[])
+					.filter((p: any) => p.type === "image_url" && p.image_url?.url)
+					.map((p: any) => ({
+						type: "image_url",
+						image_url: { url: p.image_url.url },
+					}));
+
+				// Handle file parts (AI SDK format for images)
+				const fileParts = (message.parts as any[])
+					.filter(
+						(p: any) => p.type === "file" && p.mediaType?.startsWith("image/"),
+					)
+					.map((p: any) => {
+						const { dataUrl } = parseImageFile(p);
+						return {
+							type: "image_url",
+							image_url: { url: dataUrl },
+						};
+					});
+
+				const images = [...imageUrlParts, ...fileParts];
+
 				await addMessage.mutateAsync({
 					params: { path: { id: chatId } },
 					body: {
 						role: "assistant",
-						content: message.parts
-							.filter((p) => p.type === "text")
-							.map((p) => p.text)
-							.join(""),
+						content: textContent || undefined,
+						images: images.length > 0 ? JSON.stringify(images) : undefined,
 					},
 				});
 			},
@@ -101,12 +127,51 @@ export default function ChatPageClient({
 
 		setMessages((prev) => {
 			if (prev.length === 0) {
-				return currentChatData.messages.map((msg) => ({
-					id: msg.id,
-					role: msg.role,
-					content: msg.content ?? "",
-					parts: [{ type: "text", text: msg.content ?? "" }],
-				}));
+				return currentChatData.messages.map((msg) => {
+					const parts: any[] = [];
+
+					// Add text content
+					if (msg.content) {
+						parts.push({ type: "text", text: msg.content });
+					}
+
+					// Add images if present
+					if (msg.images) {
+						try {
+							const parsedImages = JSON.parse(msg.images);
+							// Convert saved image_url format to file format for rendering
+							const imageParts = parsedImages.map((img: any) => {
+								const dataUrl = img.image_url?.url || "";
+								// Extract base64 and mediaType from data URL
+								if (dataUrl.startsWith("data:")) {
+									const [header, base64] = dataUrl.split(",");
+									const mediaType =
+										header.match(/data:([^;]+)/)?.[1] || "image/png";
+									return {
+										type: "file",
+										mediaType,
+										url: base64,
+									};
+								}
+								return {
+									type: "file",
+									mediaType: "image/png",
+									url: dataUrl,
+								};
+							});
+							parts.push(...imageParts);
+						} catch (error) {
+							console.error("Failed to parse images:", error);
+						}
+					}
+
+					return {
+						id: msg.id,
+						role: msg.role,
+						content: msg.content ?? "",
+						parts,
+					};
+				});
 			}
 			return prev;
 		});
@@ -293,7 +358,6 @@ export default function ChatPageClient({
 					onChatSelect={handleChatSelect}
 					currentChatId={currentChatId || undefined}
 					clearMessages={clearMessages}
-					userApiKey={null}
 					isLoading={isLoading}
 					organizations={organizations}
 					selectedOrganization={selectedOrganization}

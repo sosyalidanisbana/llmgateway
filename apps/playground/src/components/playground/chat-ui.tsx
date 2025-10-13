@@ -8,6 +8,7 @@ import {
 	Conversation,
 	ConversationContent,
 } from "@/components/ai-elements/conversation";
+import { Image } from "@/components/ai-elements/image";
 import { Loader } from "@/components/ai-elements/loader";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
@@ -41,11 +42,13 @@ import {
 } from "@/components/ai-elements/tool";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ImageZoom } from "@/components/ui/image-zoom";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { parseImagePartToDataUrl } from "@/lib/image-utils";
 
 import type { UIMessage, ChatRequestOptions, ChatStatus } from "ai";
 
@@ -181,6 +184,12 @@ export const ChatUI = ({
 									const toolParts = m.parts.filter(
 										(p) => p.type === "dynamic-tool",
 									) as any[];
+									// Combine all image parts (both image_url and file types)
+									const imageParts = m.parts.filter(
+										(p: any) =>
+											(p.type === "image_url" && p.image_url?.url) ||
+											(p.type === "file" && p.mediaType?.startsWith("image/")),
+									) as any[];
 									const reasoningContent = m.parts
 										.filter((p) => p.type === "reasoning")
 										.map((p) => p.text)
@@ -204,6 +213,29 @@ export const ChatUI = ({
 											) : null}
 
 											{textContent ? <Response>{textContent}</Response> : null}
+											{imageParts.length > 0 ? (
+												<div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+													{imageParts.map((part: any, idx: number) => {
+														const { base64Only, mediaType } =
+															parseImagePartToDataUrl(part);
+
+														// Skip rendering if parsing failed
+														if (!base64Only) {
+															return null;
+														}
+
+														return (
+															<ImageZoom key={idx}>
+																<Image
+																	base64={base64Only}
+																	mediaType={mediaType}
+																	alt={part.name || "Generated image"}
+																/>
+															</ImageZoom>
+														);
+													})}
+												</div>
+											) : null}
 											{isLastMessage &&
 												(status === "submitted" || status === "streaming") && (
 													<Loader />
@@ -300,12 +332,14 @@ export const ChatUI = ({
 
 							setText(""); // Clear input immediately
 
+							const parts: any[] = [{ type: "text", text: textContent }];
+
 							// Call sendMessage which will handle adding the user message and API request
 							sendMessage(
 								{
 									id: crypto.randomUUID(),
 									role: "user",
-									parts: [{ type: "text", text: textContent }],
+									parts,
 								},
 								{
 									body: {
