@@ -169,11 +169,22 @@ const completionsRequestSchema = z.object({
 			example: 0.0,
 		}),
 	response_format: z
-		.object({
-			type: z.enum(["text", "json_object"]).openapi({
-				example: "json_object",
+		.union([
+			z.object({
+				type: z.enum(["text", "json_object"]).openapi({
+					example: "json_object",
+				}),
 			}),
-		})
+			z.object({
+				type: z.literal("json_schema"),
+				json_schema: z.object({
+					name: z.string(),
+					description: z.string().optional(),
+					schema: z.record(z.any()),
+					strict: z.boolean().optional(),
+				}),
+			}),
+		])
 		.optional(),
 	stream: z.boolean().optional().default(false),
 	tools: z
@@ -544,11 +555,32 @@ chat.openapi(completions, async (c) => {
 		});
 	}
 
-	if (response_format?.type === "json_object") {
+	if (
+		response_format?.type === "json_object" ||
+		response_format?.type === "json_schema"
+	) {
 		if (!(modelInfo as ModelDefinition).jsonOutput) {
 			throw new HTTPException(400, {
 				message: `Model ${requestedModel} does not support JSON output mode`,
 			});
+		}
+
+		// Additional validation for json_schema type
+		if (response_format?.type === "json_schema") {
+			// For non-auto/custom models, check if the provider supports json_schema
+			if (requestedModel !== "auto" && requestedModel !== "custom") {
+				const supportsJsonSchema = modelInfo.providers.some(
+					(provider) =>
+						(provider as ProviderModelMapping).jsonOutputSchema === true &&
+						!(provider as ProviderModelMapping).disableJsonOutputSchema,
+				);
+
+				if (!supportsJsonSchema) {
+					throw new HTTPException(400, {
+						message: `Model ${requestedModel} does not support JSON schema output mode. Use response_format type 'json_object' instead.`,
+					});
+				}
+			}
 		}
 	}
 
