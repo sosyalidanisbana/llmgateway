@@ -182,7 +182,7 @@ export const deepseekModels = [
 				modelName: "deepseek/deepseek-chat-v3.1",
 				inputPrice: 0.27 / 1e6,
 				outputPrice: 1.0 / 1e6,
-				discount: 0.1,
+				discount: 0.9,
 				requestPrice: 0,
 				contextSize: 128000,
 				maxOutput: undefined,
