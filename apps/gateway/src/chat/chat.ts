@@ -840,7 +840,7 @@ chat.openapi(completions, async (c) => {
 
 		// If free_models_only is true, expand to include free models
 		if (free_models_only) {
-			allowedAutoModels = [...allowedAutoModels, "gpt-4.1-free"];
+			allowedAutoModels = [...allowedAutoModels, "llama-3.3-70b-instruct-free"];
 		}
 
 		let selectedModel: ModelDefinition | undefined;
