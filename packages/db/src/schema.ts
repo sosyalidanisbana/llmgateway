@@ -191,6 +191,11 @@ export const userOrganization = pgTable(
 		organizationId: text()
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
+		role: text({
+			enum: ["owner", "admin", "developer"],
+		})
+			.notNull()
+			.default("owner"),
 	},
 	(table) => [
 		index("user_organization_user_id_idx").on(table.userId),
@@ -244,8 +249,14 @@ export const apiKey = pgTable(
 		projectId: text()
 			.notNull()
 			.references(() => project.id, { onDelete: "cascade" }),
+		createdBy: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
 	},
-	(table) => [index("api_key_project_id_idx").on(table.projectId)],
+	(table) => [
+		index("api_key_project_id_idx").on(table.projectId),
+		index("api_key_created_by_idx").on(table.createdBy),
+	],
 );
 
 export const apiKeyIamRule = pgTable(
