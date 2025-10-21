@@ -11,7 +11,7 @@ services:
       - "3005:3005" # Docs
       - "4001:4001" # Gateway
       - "4002:4002" # API
-      - "5432:5432" # PostgreSQL
+      - "5437:5432" # PostgreSQL
       - "6379:6379" # Redis
     volumes:
       - llmgateway_postgres:/var/lib/postgresql/data
