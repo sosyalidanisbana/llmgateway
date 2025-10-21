@@ -1,7 +1,6 @@
 name: llmgateway-prod
 
 services:
-  # Gateway Service
   gateway:
     image: ghcr.io/theopenco/llmgateway-gateway:latest
     container_name: llmgateway-gateway
@@ -35,12 +34,10 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_dev_password}
-      # LLM Provider API Keys
       - LLM_OPENAI_API_KEY=${LLM_OPENAI_API_KEY}
       - LLM_ANTHROPIC_API_KEY=${LLM_ANTHROPIC_API_KEY}
       - CI=${CI}
 
-  # API Service
   api:
     image: ghcr.io/theopenco/llmgateway-api:latest
     container_name: llmgateway-api
@@ -49,6 +46,8 @@ services:
       - "${API_PORT:-4002}:80"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test:
@@ -70,6 +69,9 @@ services:
       - RUN_MIGRATIONS=true
       - PORT=80
       - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-llmgateway_dev_password}@postgres:5432/${POSTGRES_DB:-llmgateway}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_dev_password}
       - UI_URL=${UI_URL:-http://localhost:3002}
       - API_URL=${API_URL:-http://localhost:4002}
       - ORIGIN_URLS=${ORIGIN_URLS:-http://localhost:3002,http://localhost:3003,http://localhost:4002}
@@ -85,7 +87,6 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - CI=${CI}
 
-  # UI Service
   ui:
     image: ghcr.io/theopenco/llmgateway-ui:latest
     container_name: llmgateway-ui
@@ -110,13 +111,15 @@ services:
     environment:
       - API_URL=${API_URL:-http://localhost:4002}
       - API_BACKEND_URL=${API_BACKEND_URL:-http://api:80}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_dev_password}
       - PLAYGROUND_URL=${PLAYGROUND_URL:-http://localhost:3003}
       - DOCS_URL=${DOCS_URL:-http://localhost:3005}
       - POSTHOG_HOST=${POSTHOG_HOST}
       - POSTHOG_KEY=${POSTHOG_KEY}
       - CI=${CI}
 
-  # Playground Service
   playground:
     image: ghcr.io/theopenco/llmgateway-playground:latest
     container_name: llmgateway-playground
@@ -141,13 +144,15 @@ services:
     environment:
       - API_URL=${API_URL:-http://localhost:4002}
       - API_BACKEND_URL=${API_BACKEND_URL:-http://api:80}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_dev_password}
       - DOCS_URL=${DOCS_URL:-http://localhost:3005}
       - PLAYGROUND_URL=${PLAYGROUND_URL:-http://localhost:3003}
       - POSTHOG_HOST=${POSTHOG_HOST}
       - POSTHOG_KEY=${POSTHOG_KEY}
       - CI=${CI}
 
-  # Docs Service
   docs:
     image: ghcr.io/theopenco/llmgateway-docs:latest
     container_name: llmgateway-docs
@@ -176,7 +181,6 @@ services:
       - POSTHOG_HOST=${POSTHOG_HOST}
       - CI=${CI}
 
-  # PostgreSQL Database
   postgres:
     platform: linux/amd64
     image: postgres:17-alpine
@@ -200,7 +204,6 @@ services:
     networks:
       - llmgateway-network
 
-  # Redis for caching and queues
   redis:
     image: redis:8-alpine
     platform: linux/amd64
